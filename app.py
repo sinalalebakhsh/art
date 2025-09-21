@@ -8,6 +8,35 @@ from config import Config
 from utils import FileUtils, GUIUtils, ArchiveViewer
 from auto_responder import AutoResponder
 
+# در app.py به این صورت استفاده کنید
+from search import search_and_save
+
+# در متد send_message اضافه کنید:
+def send_message(self, event=None):
+    message = self.user_input.get().strip()
+    if message:
+        # نمایش پیام کاربر
+        self.display_message(f"شما: {message}", "user")
+        
+        # ذخیره پیام کاربر
+        user_filename, _ = self.get_current_filenames()
+        FileUtils.save_message_to_file(user_filename, f"کاربر: {message}")
+        
+        # جستجوی خودکار در اینترنت
+        search_results = search_and_save(message, max_results=3)
+        
+        # تولید پاسخ بر اساس نتایج جستجو
+        if search_results:
+            bot_response = f"من درباره '{message}' جستجو کردم. {len(search_results)} نتیجه پیدا شد."
+        else:
+            bot_response = f"متأسفم، نتوانستم اطلاعاتی درباره '{message}' پیدا کنم."
+        
+        self.display_message(f"ربات: {bot_response}", "bot")
+        
+        # پاک کردن فیلد ورودی
+        self.user_input.delete(0, tk.END)
+
+       
 class ChatApplication:
     def __init__(self, root):
         self.root = root
@@ -387,3 +416,24 @@ class MultiLineInputWindow:
     def clear_text(self):
         """پاک کردن متن"""
         self.text_widget.delete("1.0", tk.END)
+
+from search import SafeWebSearcher
+
+# search.py (اضافه کردن تابع اصلی)
+def search_and_save(query, max_results=5):
+    """تابع اصلی برای جستجو و ذخیره"""
+    searcher = SafeWebSearcher()
+    
+    # بارگذاری نتایج قبلی اگر وجود داشته باشد
+    searcher.load_from_file()
+    
+    # جستجوی کوئری جدید
+    results = searcher.search_query(query, max_results)
+    
+    if results:
+        count = searcher.save_to_dictionary(query, results)
+        print(f"{count} نتیجه برای '{query}' پیدا و ذخیره شد")
+        return results
+    else:
+        print("هیچ نتیجه‌ای پیدا نشد")
+        return []
