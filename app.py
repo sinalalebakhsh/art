@@ -8,33 +8,55 @@ from config import Config
 from utils import FileUtils, GUIUtils, ArchiveViewer
 from auto_responder import AutoResponder
 
+from auto_responder import AutoResponder
+from search import SafeWebSearcher
+
 # در app.py به این صورت استفاده کنید
 from search import search_and_save
 
-# در متد send_message اضافه کنید:
+# در کلاس ChatApplication، متد send_message باید اینگونه باشد:
 def send_message(self, event=None):
     message = self.user_input.get().strip()
     if message:
-        # نمایش پیام کاربر
+        # نمایش پیام کاربر در چت
         self.display_message(f"شما: {message}", "user")
         
-        # ذخیره پیام کاربر
+        # ذخیره پیام کاربر در فایل
         user_filename, _ = self.get_current_filenames()
         FileUtils.save_message_to_file(user_filename, f"کاربر: {message}")
         
-        # جستجوی خودکار در اینترنت
-        search_results = search_and_save(message, max_results=3)
-        
-        # تولید پاسخ بر اساس نتایج جستجو
-        if search_results:
-            bot_response = f"من درباره '{message}' جستجو کردم. {len(search_results)} نتیجه پیدا شد."
-        else:
-            bot_response = f"متأسفم، نتوانستم اطلاعاتی درباره '{message}' پیدا کنم."
-        
+        # تولید و نمایش پاسخ خودکار (که شامل جستجو می‌شود)
+        topic = self.chat_topic.get().strip()
+        bot_response = AutoResponder.process_message(message, topic)
         self.display_message(f"ربات: {bot_response}", "bot")
         
         # پاک کردن فیلد ورودی
         self.user_input.delete(0, tk.END)
+
+# # در متد send_message اضافه کنید:
+# def send_message(self, event=None):
+#     message = self.user_input.get().strip()
+#     if message:
+#         # نمایش پیام کاربر
+#         self.display_message(f"شما: {message}", "user")
+        
+#         # ذخیره پیام کاربر
+#         user_filename, _ = self.get_current_filenames()
+#         FileUtils.save_message_to_file(user_filename, f"کاربر: {message}")
+        
+#         # جستجوی خودکار در اینترنت
+#         search_results = search_and_save(message, max_results=3)
+        
+#         # تولید پاسخ بر اساس نتایج جستجو
+#         if search_results:
+#             bot_response = f"من درباره '{message}' جستجو کردم. {len(search_results)} نتیجه پیدا شد."
+#         else:
+#             bot_response = f"متأسفم، نتوانستم اطلاعاتی درباره '{message}' پیدا کنم."
+        
+#         self.display_message(f"ربات: {bot_response}", "bot")
+        
+#         # پاک کردن فیلد ورودی
+#         self.user_input.delete(0, tk.END)
 
        
 class ChatApplication:
